@@ -1,0 +1,168 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model CandidateProfile {
+  id                      String                   @id @default(uuid())
+  name                    String
+  headline                String?
+  email                   String
+  phone                   String?
+  location                String?
+  linkedin                String?
+  github                  String?
+  portfolio               String?
+  summary                 String?
+  experiences             ProfessionalExperience[]
+  educations              Education[]
+  skills                  Skill[]
+  projects                Project[]
+  certifications          Certification[]
+  knowledgeItems          KnowledgeItem[]
+  generatedResumes        GeneratedResume[]
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+}
+
+model ProfessionalExperience {
+  id             String           @id @default(uuid())
+  candidateId    String
+  candidate      CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  company        String
+  role           String
+  employmentType String?
+  location       String?
+  startDate      String
+  endDate        String?
+  current        Boolean          @default(false)
+  description    String?
+  achievements   String?          // Armazenado como JSON (Array de strings) ou texto
+  technologies   String?          // Armazenado como JSON ou delimitado por vírgulas
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model Education {
+  id          String           @id @default(uuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  institution String
+  degree      String
+  field       String?
+  startDate   String
+  endDate     String?
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Skill {
+  id                String           @id @default(uuid())
+  candidateId       String
+  candidate         CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  name              String
+  category          String           // Technical, AI, Programming, Database, Cloud, Automation, Framework, Tools, Soft Skills, Management, Other
+  level             String?          // Beginner, Intermediate, Advanced, Expert
+  yearsOfExperience Int?
+  description       String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model Project {
+  id           String           @id @default(uuid())
+  candidateId  String
+  candidate    CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  role         String?
+  technologies String?          // Armazenado como JSON (Array de strings)
+  achievements String?          // Armazenado como JSON (Array de strings)
+  url          String?
+  startDate    String?
+  endDate      String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model Certification {
+  id             String           @id @default(uuid())
+  candidateId    String
+  candidate      CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  name           String
+  issuer         String
+  issueDate      String?
+  expirationDate String?
+  credentialId   String?
+  credentialUrl  String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model KnowledgeItem {
+  id          String           @id @default(uuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  category    String           // Arquitetura, Experiência profissional, Projeto, Tecnologia, Metodologia, Domínio, Resultado, Responsabilidade, Conquista, Conhecimento
+  title       String
+  content     String
+  tags        String?          // Armazenado como JSON (Array de strings)
+  source      String?          // Manual, AI Extractor, Document
+  confidence  Float?           @default(1.0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Job {
+  id             String           @id @default(uuid())
+  title          String
+  company        String
+  source         String?
+  url            String?
+  rawDescription String
+  analysis       JobAnalysis?
+  resumes        GeneratedResume[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model JobAnalysis {
+  id                    String   @id @default(uuid())
+  jobId                 String   @unique
+  job                   Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  requiredSkills        String?  // Armazenado como JSON
+  preferredSkills       String?  // Armazenado como JSON
+  keywords              String?  // Armazenado como JSON [{term, category, importance, context, required}]
+  responsibilities      String?  // Armazenado como JSON
+  seniority             String?
+  technologies          String?  // Armazenado como JSON
+  softSkills            String?  // Armazenado como JSON
+  educationRequirements String?  // Armazenado como JSON
+  languageRequirements  String?  // Armazenado como JSON
+  atsRecommendations    String?  // Armazenado como JSON
+  matchScore            Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model GeneratedResume {
+  id                String           @id @default(uuid())
+  candidateId       String
+  candidate         CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  jobId             String
+  job               Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  title             String
+  content           String           // Armazena a estrutura JSON completa do ResumeDocument
+  atsScore          Int              @default(0)
+  keywordMatchScore Int              @default(0)
+  factCheckStatus   String?          // Passed, Warnings, UnsupportedClaimsDetected
+  factCheckDetails  String?          // JSON com logs de checagem factual
+  atsFeedback       String?          // JSON com Strengths, Gaps e Recommendations
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
