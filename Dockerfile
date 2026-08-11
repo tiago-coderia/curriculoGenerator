@@ -1,4 +1,4 @@
-# Image base com Node 20 no Alpine
+# Imagem base com Node 20 no Alpine
 FROM node:20-alpine AS base
 
 # Instala bibliotecas necessárias para o Prisma funcionar no Alpine
@@ -17,23 +17,51 @@ RUN npm ci
 FROM base AS builder
 WORKDIR /app
 
+# Recebe os argumentos de build passados pelo Docker / Easypanel
+ARG DATABASE_URL="file:./dev.db"
+ARG AUTHORIZED_EMAIL
+ARG AUTH_SECRET
+ARG AI_PROVIDER
+ARG AZURE_OPENAI_ENDPOINT
+ARG AZURE_OPENAI_API_KEY
+
+ENV DATABASE_URL=${DATABASE_URL}
+ENV AUTHORIZED_EMAIL=${AUTHORIZED_EMAIL}
+ENV AUTH_SECRET=${AUTH_SECRET}
+ENV AI_PROVIDER=${AI_PROVIDER}
+ENV AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+ENV AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+ENV NEXT_TELEMETRY_DISABLED=1
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ENV NEXT_TELEMETRY_DISABLED=1
-
-# Gera os tipos do Prisma e faz o build de produção do Next.js
+# Gera os tipos do Prisma, sincroniza a base SQLite e compila o Next.js
 RUN npx prisma generate
+RUN npx prisma db push
 RUN npm run build
 
 # 3. Imagem final para execução (Runner)
 FROM base AS runner
 WORKDIR /app
 
+ARG DATABASE_URL="file:./dev.db"
+ARG AUTHORIZED_EMAIL
+ARG AUTH_SECRET
+ARG AI_PROVIDER
+ARG AZURE_OPENAI_ENDPOINT
+ARG AZURE_OPENAI_API_KEY
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV DATABASE_URL=${DATABASE_URL}
+ENV AUTHORIZED_EMAIL=${AUTHORIZED_EMAIL}
+ENV AUTH_SECRET=${AUTH_SECRET}
+ENV AI_PROVIDER=${AI_PROVIDER}
+ENV AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+ENV AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
 
 # Copia arquivos necessários do estágio de build
 COPY --from=builder /app/package.json ./package.json
