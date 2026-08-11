@@ -86,7 +86,124 @@ export default function SettingsPage() {
             </p>
           </div>
         </div>
+
+        {/* Card de Segurança / Alterar Senha */}
+        <ChangePasswordCard />
       </div>
     </div>
   );
 }
+
+function ChangePasswordCard() {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMsg(null);
+
+    if (newPassword.length < 6) {
+      setMsg({ type: 'error', text: 'A nova senha deve ter no mínimo 6 caracteres.' });
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setMsg({ type: 'error', text: 'A nova senha e a confirmação não coincidem.' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword, confirmNewPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMsg({ type: 'error', text: data.error || 'Erro ao alterar senha.' });
+      } else {
+        setMsg({ type: 'success', text: 'Senha alterada com sucesso!' });
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+      }
+    } catch {
+      setMsg({ type: 'error', text: 'Falha na conexão.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+      <div>
+        <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <Key className="w-5 h-5 text-indigo-500" /> Alterar Senha de Acesso
+        </h2>
+        <p className="text-xs text-slate-500 mt-0.5">
+          Defina uma nova senha para a conta restrita do sistema.
+        </p>
+      </div>
+
+      {msg && (
+        <div
+          className={`p-3 rounded-xl text-xs font-medium ${
+            msg.type === 'success'
+              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+              : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+          }`}
+        >
+          {msg.text}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-3 max-w-md">
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Senha Atual</label>
+          <input
+            type="password"
+            required
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nova Senha</label>
+          <input
+            type="password"
+            required
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Confirmar Nova Senha</label>
+          <input
+            type="password"
+            required
+            value={confirmNewPassword}
+            onChange={(e) => setConfirmNewPassword(e.target.value)}
+            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs py-2.5 px-4 rounded-xl shadow-md transition-all disabled:opacity-50"
+        >
+          {loading ? 'Salvando...' : 'Atualizar Senha'}
+        </button>
+      </form>
+    </div>
+  );
+}
+

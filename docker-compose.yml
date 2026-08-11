@@ -12,6 +12,8 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=file:./dev.db
       - SEED_ON_START=true
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTHORIZED_EMAIL=${AUTHORIZED_EMAIL}
       - AI_PROVIDER=${AI_PROVIDER:-azure}
       - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
       - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}

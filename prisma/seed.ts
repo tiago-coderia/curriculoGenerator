@@ -17,6 +17,22 @@ async function main() {
   await prisma.professionalExperience.deleteMany();
   await prisma.candidateProfile.deleteMany();
 
+  // Create Authorized User if not existing
+  const authorizedEmail = (process.env.AUTHORIZED_EMAIL || '').toLowerCase().trim();
+  if (authorizedEmail) {
+    const existingUser = await prisma.user.findUnique({ where: { email: authorizedEmail } });
+    if (!existingUser) {
+      await prisma.user.create({
+        data: {
+          email: authorizedEmail,
+          password: null, // Senha pendente de configuração no 1º acesso
+        },
+      });
+      console.log(`Usuário autorizado criado: ${authorizedEmail} (senha pendente)`);
+    }
+  }
+
+
   // Create Candidate Profile
   const candidate = await prisma.candidateProfile.create({
     data: {
