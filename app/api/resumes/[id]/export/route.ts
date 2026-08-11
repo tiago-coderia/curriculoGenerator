@@ -24,7 +24,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     if (format === 'docx') {
       const docxBuffer = await generateDocxBuffer(documentContent);
-      return new NextResponse(docxBuffer, {
+      return new NextResponse(new Uint8Array(docxBuffer), {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
           'Content-Disposition': `attachment; filename="${candidateNameClean}_Resume_ATS.docx"`,
@@ -34,7 +34,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     // Default: PDF
     const pdfBuffer = await generatePdfBuffer(documentContent);
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `inline; filename="${candidateNameClean}_Resume_ATS.pdf"`,

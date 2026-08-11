@@ -5,18 +5,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Iniciando populamento do banco de dados (Seed)...');
 
-  // Clear existing data
-  await prisma.generatedResume.deleteMany();
-  await prisma.jobAnalysis.deleteMany();
-  await prisma.job.deleteMany();
-  await prisma.knowledgeItem.deleteMany();
-  await prisma.certification.deleteMany();
-  await prisma.project.deleteMany();
-  await prisma.skill.deleteMany();
-  await prisma.education.deleteMany();
-  await prisma.professionalExperience.deleteMany();
-  await prisma.candidateProfile.deleteMany();
-
   // Create Authorized User if not existing
   const authorizedEmail = (process.env.AUTHORIZED_EMAIL || '').toLowerCase().trim();
   if (authorizedEmail) {
@@ -31,6 +19,25 @@ async function main() {
       console.log(`Usuário autorizado criado: ${authorizedEmail} (senha pendente)`);
     }
   }
+
+  // Verifica se já existem dados de candidato para evitar sobrescrever dados do usuário
+  const existingCandidatesCount = await prisma.candidateProfile.count();
+  if (existingCandidatesCount > 0) {
+    console.log('Perfis já existentes no banco SQLite. Seed de candidato pulado para preservar seus dados.');
+    return;
+  }
+
+  // Clear existing data (somente na 1ª carga)
+  await prisma.generatedResume.deleteMany();
+  await prisma.jobAnalysis.deleteMany();
+  await prisma.job.deleteMany();
+  await prisma.knowledgeItem.deleteMany();
+  await prisma.certification.deleteMany();
+  await prisma.project.deleteMany();
+  await prisma.skill.deleteMany();
+  await prisma.education.deleteMany();
+  await prisma.professionalExperience.deleteMany();
+  await prisma.candidateProfile.deleteMany();
 
 
   // Create Candidate Profile
